@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { hash, compare } from 'bcryptjs';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
@@ -22,11 +21,7 @@ export async function verifyPassword(password: string, hashed: string): Promise<
 
 // Create JWT token
 export function createToken(userId: string, role: string): string {
-  return jwt.sign(
-    { sub: userId, role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  return jwt.sign({ sub: userId, role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 // Verify JWT token and return typed payload
@@ -44,7 +39,8 @@ export function verifyToken(token: string): AuthPayload | null {
       sub: withRole.sub as string,
       role: withRole.role ?? '',
     };
-  } catch (_error) {
+  } catch {
+    // returning null on token verification error
     return null;
   }
 }
@@ -52,8 +48,6 @@ export function verifyToken(token: string): AuthPayload | null {
 // Extract token from request headers
 export function getTokenFromRequest(req: Request): string | null {
   const authHeader = req.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return null;
-  }
+  if (!authHeader?.startsWith('Bearer ')) return null;
   return authHeader.slice(7);
 }
