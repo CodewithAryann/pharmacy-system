@@ -22,14 +22,19 @@ interface Params {
 }
 
 // GET /api/products/[id]
-export async function GET(req: NextRequest, { params }: { params: Params }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<Params> }
+) {
   try {
     const token = getTokenFromRequest(req);
     if (!token || !verifyToken(token)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const product = await prisma.product.findUnique({ where: { id: params.id } });
+    const { id } = await context.params;
+
+    const product = await prisma.product.findUnique({ where: { id } });
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
     return NextResponse.json({ success: true, data: product });
@@ -40,16 +45,20 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
 }
 
 // PUT /api/products/[id]
-export async function PUT(req: NextRequest, { params }: { params: Params }) {
+export async function PUT(
+  req: NextRequest,
+  context: { params: Promise<Params> }
+) {
   try {
     const token = getTokenFromRequest(req);
-    const decoded = token ? (verifyToken(token) as JwtPayload) : null;
+    const decoded = token ? verifyToken(token) : null;
     if (!decoded) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const { id } = await context.params;
     const body: ProductUpdateBody = await req.json();
 
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: { ...body },
     });
 
@@ -61,15 +70,20 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
 }
 
 // DELETE /api/products/[id]
-export async function DELETE(req: NextRequest, { params }: { params: Params }) {
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<Params> }
+) {
   try {
     const token = getTokenFromRequest(req);
-    const decoded = token ? (verifyToken(token) as JwtPayload & { role?: string }) : null;
+    const decoded = token ? verifyToken(token) : null;
     if (!decoded || decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await prisma.product.delete({ where: { id: params.id } });
+    const { id } = await context.params;
+
+    await prisma.product.delete({ where: { id } });
     return NextResponse.json({ success: true, message: 'Product deleted' });
   } catch (err: unknown) {
     console.error('Delete product error:', err);
