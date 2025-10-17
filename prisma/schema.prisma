@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String?
+  role      String     @default("pharmacist") // admin, pharmacist
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("users")
+}
+
+model Product {
+  id                String    @id @default(cuid())
+  productName       String
+  ndc               String    @unique
+  supplierName      String
+  quantity          Int
+  store             String
+  total             Int
+  productGroup      String?
+  startingInvDate   DateTime?
+  endingInvDate     DateTime?
+  dispensed         Int       @default(0)
+  storage           Int       @default(0)
+  overage           Int       @default(0)
+  return            Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("products")
+}
+
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String
+  contactNumber String
+  email         String?
+  address       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
+model Store {
+  id           String   @id @default(cuid())
+  name         String
+  stockInHand  Int      @default(0)
+  location     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("stores")
+}
